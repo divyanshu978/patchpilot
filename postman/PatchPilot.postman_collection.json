@@ -1,0 +1,138 @@
+{
+  "info": {
+    "name": "PatchPilot API",
+    "description": "PatchPilot backend requests. No authentication in this initial version.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "owner", "value": "octocat" },
+    { "key": "repo", "value": "hello-world" },
+    { "key": "pullNumber", "value": "42" },
+    { "key": "reviewId", "value": "00000000-0000-4000-8000-000000000001" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "GitHub - Install redirect",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/github/install"
+      }
+    },
+    {
+      "name": "GitHub - List repositories",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/github/repositories?page=1&perPage=30",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "github", "repositories"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "perPage", "value": "30" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GitHub - List pull requests",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/github/repositories/{{owner}}/{{repo}}/pulls?state=open",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "github", "repositories", "{{owner}}", "{{repo}}", "pulls"],
+          "query": [{ "key": "state", "value": "open" }]
+        }
+      }
+    },
+    {
+      "name": "GitHub - Get pull request",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/github/repositories/{{owner}}/{{repo}}/pulls/{{pullNumber}}"
+      }
+    },
+    {
+      "name": "Reviews - Create",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"owner\": \"{{owner}}\",\n  \"repo\": \"{{repo}}\",\n  \"pullNumber\": 42\n}"
+        },
+        "url": "{{baseUrl}}/api/reviews"
+      }
+    },
+    {
+      "name": "Reviews - List",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/reviews?limit=20&offset=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "reviews"],
+          "query": [
+            { "key": "limit", "value": "20" },
+            { "key": "offset", "value": "0" },
+            { "key": "status", "value": "COMPLETED", "disabled": true },
+            { "key": "repositoryId", "value": "", "disabled": true }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reviews - Get",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/reviews/{{reviewId}}"
+      }
+    },
+    {
+      "name": "Reviews - Findings",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/reviews/{{reviewId}}/findings"
+      }
+    },
+    {
+      "name": "Reviews - Status",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/reviews/{{reviewId}}/status"
+      }
+    },
+    {
+      "name": "Reviews - Publish summary",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/reviews/{{reviewId}}/publish"
+      }
+    },
+    {
+      "name": "Webhooks - GitHub (signed; use GitHub or a tool that computes the HMAC)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-GitHub-Event", "value": "ping" },
+          { "key": "X-GitHub-Delivery", "value": "local-delivery-1" },
+          { "key": "X-Hub-Signature-256", "value": "sha256=<computed-hmac>" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"zen\": \"Keep it simple.\"\n}"
+        },
+        "url": "{{baseUrl}}/api/webhooks/github"
+      }
+    }
+  ]
+}
