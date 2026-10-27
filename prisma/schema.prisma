@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ReviewStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum FindingCategory {
+  SECURITY
+  BUG
+  PERFORMANCE
+  TEST
+  MAINTAINABILITY
+  STYLE
+  DEPENDENCY
+}
+
+model Repository {
+  id                String   @id @default(uuid())
+  githubRepositoryId Int     @unique
+  owner             String
+  name              String
+  installationId    Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  pullRequests PullRequest[]
+
+  @@unique([owner, name])
+  @@index([installationId])
+}
+
+model PullRequest {
+  id           String   @id @default(uuid())
+  repositoryId String
+  number       Int
+  title        String
+  state        String   @default("open")
+  headSha      String
+  baseSha      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  reviews    Review[]
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId])
+  @@index([repositoryId, state])
+}
+
+model Review {
+  id            String       @id @default(uuid())
+  pullRequestId String
+  headSha       String
+  status        ReviewStatus @default(QUEUED)
+  summary       String?
+  errorMessage  String?
+  createdAt     DateTime     @default(now())
+  completedAt   DateTime?
+  summaryPublishedAt DateTime?
+  summaryPublishError String?
+
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  findings    Finding[]
+
+  @@index([pullRequestId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+model Finding {
+  id           String          @id @default(uuid())
+  reviewId     String
+  title        String
+  description  String
+  severity     Severity
+  category     FindingCategory
+  filePath     String?
+  startLine    Int?
+  endLine      Int?
+  evidence     String?
+  suggestedFix String?
+  confidence   Float           @default(0.8)
+  createdAt    DateTime        @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@index([severity])
+}
+
+model WebhookEvent {
+  id         String   @id @default(uuid())
+  deliveryId String   @unique
+  eventType  String
+  createdAt  DateTime @default(now())
+}
